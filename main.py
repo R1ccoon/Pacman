@@ -13,21 +13,36 @@ yellow = (255, 255, 0)
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, color):
         pass
-
+    def pos(self):
+        pass
 
 # Функция отрисовки карты
 def Map(all_sprites_list):
-    pass
+    def __init__(self):
+        pass
+    def loadmap(self):
+        pass
+    def changemap(self):
+        pass
 
 
 # Объект Игрока
 class Player(pygame.sprite.Sprite):
-    pass
-
+    def __init__(self):
+        pass
+    def move(self):
+        pass
+    def point(self):
+        pass
 
 # Класс противника
 class npc(Player):
-    pass
+    def __init__(self):
+        pass
+    def move(self):
+        pass
+    def kill(self):
+        pass
 
 
 pygame.init()
