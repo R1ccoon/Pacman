@@ -128,10 +128,10 @@ def generate_level(level):
                 n.append(Tile('wall_7', x, y))
             elif level[y][x] == '.':
                 n.append(Point('point', x, y))
-
             elif level[y][x] == '@':
                 Tile('empty', x, y)
                 new_player = AnimatedSprite(load_image("pacman.png"), 3, 1, x, y)
+                n.append(None)
         maplist.append(n)
     return new_player, x, y
 
@@ -208,13 +208,17 @@ def main():
                 if event.key == pygame.K_DOWN:
                     move = 4
 
-        if load_level('map.txt')[y][x - 1] == '.' and move == 1 and count == 1:
+        if (load_level('map.txt')[y][x - 1] == '.' or load_level('map.txt')[y][x - 1] == '@') \
+                and move == 1 and count == 1:
             x -= 1
-        if load_level('map.txt')[y][x + 1] == '.' and move == 2 and count == 1:
+        if (load_level('map.txt')[y][x + 1] == '.' or load_level('map.txt')[y][x + 1] == '@') \
+                and move == 2 and count == 1:
             x += 1
-        if load_level('map.txt')[y - 1][x] == '.' and move == 3 and count == 1:
+        if (load_level('map.txt')[y - 1][x] == '.' or load_level('map.txt')[y - 1][x] == '@') \
+                and move == 3 and count == 1:
             y -= 1
-        if load_level('map.txt')[y + 1][x] == '.' and move == 4 and count == 1:
+        if (load_level('map.txt')[y + 1][x] == '.' or load_level('map.txt')[y + 1][x] == '@') \
+                and move == 4 and count == 1:
             y += 1
         player.rectmove(x, y)
         all_sprites.draw(screen)
@@ -228,7 +232,7 @@ def main():
         if load_level('map.txt')[y][x] == '.':
             maplist[y][x].kill()
             # pointcount += 1
-
+            print(x, y)
         # print(pointcount)
 
 
