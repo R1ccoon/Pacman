@@ -1,6 +1,7 @@
 import pygame
 import os
 import sys
+import random
 
 black = (0, 0, 0)
 white = (255, 255, 255)
@@ -15,8 +16,9 @@ all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 point_group = pygame.sprite.Group()
 player = None
+enemy = None
 player_group = pygame.sprite.Group()
-fps = 10
+fps = 7
 pygame.display.set_caption('Pacman')
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode(size)
@@ -106,7 +108,7 @@ class Point(pygame.sprite.Sprite):
 
 
 def generate_level(level):
-    new_player, x, y = None, None, None
+    new_player, new_enemy, x, y = None, None, None, None
     for y in range(len(level)):
         n = []
         for x in range(len(level[y])):
@@ -132,8 +134,12 @@ def generate_level(level):
                 Tile('empty', x, y)
                 new_player = AnimatedSprite(load_image("pacman.png"), 3, 1, x, y)
                 n.append(None)
+            elif level[y][x] == '#':
+                Tile('empty', x, y)
+                new_enemy = AnimatedEnemy(load_image("ghost.png"), 4, 1, x, y)
+                n.append(None)
         maplist.append(n)
-    return new_player, x, y
+    return new_player, new_enemy, x, y
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
@@ -171,6 +177,43 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.rect = self.rect.move(tile_width * self.posx, tile_height * self.posy)
 
 
+class AnimatedEnemy(pygame.sprite.Sprite):
+    def __init__(self, sheet, columns, rows, x, y):
+        super().__init__(all_sprites)
+        self.sheet = sheet
+        self.columns = columns
+        self.move_x, self.move_y = 0, 0
+        self.rows = rows
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.pos_x = x
+        self.pos_y = y
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(tile_width * self.pos_x, tile_height * self.pos_y)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+
+    def update(self):
+        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = self.frames[self.cur_frame]
+
+    def coordreturn(self):
+        return self.pos_x, self.pos_y
+
+    def rectmove(self, x, y):
+        self.cut_sheet(self.sheet, self.columns, self.rows)
+        self.pos_x = x
+        self.pos_y = y
+        self.rect = self.rect.move(tile_width * self.pos_x, tile_height * self.pos_y)
+        # while True:
+
+
 tile_images = {
     'wall_0': load_image('0.png'),
     'wall_1': load_image('1.png'),
@@ -187,8 +230,9 @@ tile_images = {
 
 def main():
     screen.fill((0, 0, 0))
-    player, level_x, level_y = generate_level(load_level('map.txt'))
+    player, enemy, level_x, level_y = generate_level(load_level('map.txt'))
     x, y = player.coordreturn()
+    x_1, y_1 = enemy.coordreturn()
     count = 0
     move = 1
     pointcount = 0
@@ -220,9 +264,30 @@ def main():
         if (load_level('map.txt')[y + 1][x] == '.' or load_level('map.txt')[y + 1][x] == '@') \
                 and move == 4 and count == 1:
             y += 1
-        player.rectmove(x, y)
+        if (load_level('map.txt')[y_1][x_1] == '.' or load_level('map.txt')[y_1][x_1] == '#') \
+                and x_1 != 6:
+            x_1 -= 1
+        else:
+            while (load_level('map.txt')[y_1][x_1] == '.' or load_level('map.txt')[y_1][x_1] == '#')\
+                    and x_1 != 13:
+                x_1 += 1
+        # if x != x_1 and y != y_1:
+        #     if load_level('map.txt')[y_1][x_1 - 1] == '.' and count == 1 and move == 1:
+        #         x_1 -= 1
+        #     if load_level('map.txt')[y_1][x_1 + 1] == '.' and count == 1 and move == 2:
+        #         x_1 += 1
+        # if load_level('map.txt')[y_1 - 1][x_1] == '.' and abs((y - (y_1 - 1))) < abs((y - y_1))\
+        #         and count == 1:
+        #     y_1 -= 1
+        # if load_level('map.txt')[y_1 + 1][x_1] == '.' and abs((y - (y_1 + 1))) < abs((y - y_1)) \
+        #         and count == 1:
+        #     y_1 += 1
+        # if load_level('map.txt')[y_1 + 1][x_1] == '.' and abs((y - (y_1 + 1))) < abs((y - y_1)) \
+        #         and count == 1:
+        #     y_1 += 1
         all_sprites.draw(screen)
-
+        enemy.rectmove(x_1, y_1)
+        player.rectmove(x, y)
         clock.tick(fps)
         all_sprites.update()
         pygame.display.flip()
@@ -232,7 +297,7 @@ def main():
         if load_level('map.txt')[y][x] == '.':
             maplist[y][x].kill()
             # pointcount += 1
-            print(x, y)
+            # print(x, y)
         # print(pointcount)
 
 
