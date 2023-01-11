@@ -3,6 +3,8 @@ import os
 import sys
 import random
 
+level_id = 0
+frames_count = 0
 black = (0, 0, 0)
 white = (255, 255, 255)
 blue = (0, 0, 255)
@@ -18,7 +20,7 @@ point_group = pygame.sprite.Group()
 player = None
 enemy = None
 player_group = pygame.sprite.Group()
-fps = 7
+fps = 60
 pygame.display.set_caption('Pacman')
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode(size)
@@ -26,7 +28,7 @@ background = pygame.Surface(screen.get_size())
 background = background.convert()
 n = []
 maplist = []
-
+mapfile = ['map.txt', 'map1.txt']
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -51,6 +53,52 @@ def terminate():
 
 
 tile_width = tile_height = 30
+
+
+def final_window():
+    screen.fill((0, 0, 0))
+    intro_text = "You WIN!!!!"
+    font = pygame.font.Font(None, 80)
+    text_coord = 50
+    string_rendered = font.render(intro_text, 1, pygame.Color('white'))
+    intro_rect = string_rendered.get_rect()
+    # text_coord += 40
+    intro_rect.top = text_coord
+    intro_rect.x = 180
+    # text_coord += intro_rect.height
+    screen.blit(string_rendered, intro_rect)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return main()  # начинаем игру
+        pygame.display.flip()
+        clock.tick(fps)
+
+
+def game_over_window():
+    screen.fill((0, 0, 0))
+    intro_text = "GAME OVER"
+    font = pygame.font.Font(None, 80)
+    text_coord = 50
+    string_rendered = font.render(intro_text, 1, pygame.Color('white'))
+    intro_rect = string_rendered.get_rect()
+    # text_coord += 40
+    intro_rect.top = text_coord
+    intro_rect.x = 180
+    # text_coord += intro_rect.height
+    screen.blit(string_rendered, intro_rect)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return main()  # начинаем игру
+        pygame.display.flip()
+        clock.tick(fps)
 
 
 def start_screen():
@@ -164,8 +212,9 @@ class AnimatedSprite(pygame.sprite.Sprite):
                 self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
 
     def update(self):
-        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-        self.image = self.frames[self.cur_frame]
+        if frames_count == 10:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames[self.cur_frame]
 
     def coordreturn(self):
         return self.posx, self.posy
@@ -200,8 +249,9 @@ class AnimatedEnemy(pygame.sprite.Sprite):
                 self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
 
     def update(self):
-        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-        self.image = self.frames[self.cur_frame]
+        if frames_count == 10:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames[self.cur_frame]
 
     def coordreturn(self):
         return self.pos_x, self.pos_y
@@ -212,6 +262,55 @@ class AnimatedEnemy(pygame.sprite.Sprite):
         self.pos_y = y
         self.rect = self.rect.move(tile_width * self.pos_x, tile_height * self.pos_y)
         # while True:
+
+
+def enemies_brain(x_1, y_1, xplayer, yplayer):
+    if x_1 == xplayer and y_1 == yplayer:
+        global game_over
+        game_over = True
+    while True:
+        direction = random.randint(1, 4)
+        if direction == 1 and \
+                (load_level(mapfile[level_id])[y_1][x_1 + 1] == '.'
+                 or load_level(mapfile[level_id])[y_1][x_1 + 1] == '@'
+                 or load_level(mapfile[level_id])[y_1][x_1 + 1] == '#'):
+            x_1 += 1
+            return x_1, y_1
+        if direction == 2 and \
+                (load_level(mapfile[level_id])[y_1][x_1 - 1] == '.'
+                 or load_level(mapfile[level_id])[y_1][x_1 - 1] == '@'
+                 or load_level(mapfile[level_id])[y_1][x_1 - 1] == '#'):
+            x_1 -= 1
+            return x_1, y_1
+        if direction == 3 and \
+                (load_level(mapfile[level_id])[y_1 + 1][x_1] == '.'
+                 or load_level(mapfile[level_id])[y_1 + 1][x_1] == '@'
+                 or load_level(mapfile[level_id])[y_1 + 1][x_1] == '#'):
+            y_1 += 1
+            return x_1, y_1
+        if direction == 4 and \
+                (load_level(mapfile[level_id])[y_1 - 1][x_1] == '.'
+                 or load_level(mapfile[level_id])[y_1 - 1][x_1] == '@'
+                 or load_level(mapfile[level_id])[y_1 - 1][x_1] == '#'):
+            y_1 -= 1
+            return x_1, y_1
+
+
+def next_level():
+    global n
+    global all_sprites
+    global tiles_group
+    global point_group
+    global maplist
+    global player_group
+    player_group = pygame.sprite.Group()
+    n = []
+    all_sprites = pygame.sprite.Group()
+    tiles_group = pygame.sprite.Group()
+    point_group = pygame.sprite.Group()
+    maplist = []
+    screen.fill((0, 0, 0))
+    return main()
 
 
 tile_images = {
@@ -226,16 +325,27 @@ tile_images = {
     'point': load_image('8.png'),
     'empty': load_image('9.png')
 }
+game_over = False
 
 
 def main():
+    global game_over
+    global frames_count
+    global level_id
     screen.fill((0, 0, 0))
-    player, enemy, level_x, level_y = generate_level(load_level('map.txt'))
+    player, enemy, level_x, level_y = generate_level(load_level(mapfile[level_id]))
     x, y = player.coordreturn()
     x_1, y_1 = enemy.coordreturn()
     count = 0
     move = 1
-    pointcount = 0
+    map_point = []
+    count_point = 0
+    final_points = 0
+    enemy_count = 0
+    for i in load_level(mapfile[level_id]):
+        n = list(i)
+        final_points += i.count('.')
+        map_point.append(n)
     while True:
         screen.fill((0, 0, 0))
         background.fill(black)
@@ -251,40 +361,24 @@ def main():
                     move = 3
                 if event.key == pygame.K_DOWN:
                     move = 4
-
-        if (load_level('map.txt')[y][x - 1] == '.' or load_level('map.txt')[y][x - 1] == '@') \
-                and move == 1 and count == 1:
+        if (load_level(mapfile[level_id])[y][x - 1] == '.' or load_level(mapfile[level_id])[y][x - 1] == '@'
+            or load_level(mapfile[level_id])[y][x - 1] == '#') \
+                and move == 1 and count == 15:
             x -= 1
-        if (load_level('map.txt')[y][x + 1] == '.' or load_level('map.txt')[y][x + 1] == '@') \
-                and move == 2 and count == 1:
+        if (load_level(mapfile[level_id])[y][x + 1] == '.' or load_level(mapfile[level_id])[y][x + 1] == '@'
+            or load_level(mapfile[level_id])[y][x + 1] == '#') \
+                and move == 2 and count == 15:
             x += 1
-        if (load_level('map.txt')[y - 1][x] == '.' or load_level('map.txt')[y - 1][x] == '@') \
-                and move == 3 and count == 1:
+        if (load_level(mapfile[level_id])[y - 1][x] == '.' or load_level(mapfile[level_id])[y - 1][x] == '@'
+            or load_level(mapfile[level_id])[y - 1][x] == '#') \
+                and move == 3 and count == 15:
             y -= 1
-        if (load_level('map.txt')[y + 1][x] == '.' or load_level('map.txt')[y + 1][x] == '@') \
-                and move == 4 and count == 1:
+        if (load_level(mapfile[level_id])[y + 1][x] == '.' or load_level(mapfile[level_id])[y + 1][x] == '@'
+            or load_level(mapfile[level_id])[y + 1][x] == '#') \
+                and move == 4 and count == 15:
             y += 1
-        if (load_level('map.txt')[y_1][x_1] == '.' or load_level('map.txt')[y_1][x_1] == '#') \
-                and x_1 != 6:
-            x_1 -= 1
-        else:
-            while (load_level('map.txt')[y_1][x_1] == '.' or load_level('map.txt')[y_1][x_1] == '#')\
-                    and x_1 != 13:
-                x_1 += 1
-        # if x != x_1 and y != y_1:
-        #     if load_level('map.txt')[y_1][x_1 - 1] == '.' and count == 1 and move == 1:
-        #         x_1 -= 1
-        #     if load_level('map.txt')[y_1][x_1 + 1] == '.' and count == 1 and move == 2:
-        #         x_1 += 1
-        # if load_level('map.txt')[y_1 - 1][x_1] == '.' and abs((y - (y_1 - 1))) < abs((y - y_1))\
-        #         and count == 1:
-        #     y_1 -= 1
-        # if load_level('map.txt')[y_1 + 1][x_1] == '.' and abs((y - (y_1 + 1))) < abs((y - y_1)) \
-        #         and count == 1:
-        #     y_1 += 1
-        # if load_level('map.txt')[y_1 + 1][x_1] == '.' and abs((y - (y_1 + 1))) < abs((y - y_1)) \
-        #         and count == 1:
-        #     y_1 += 1
+        if enemy_count == 5:
+            x_1, y_1 = enemies_brain(x_1, y_1, x, y)
         all_sprites.draw(screen)
         enemy.rectmove(x_1, y_1)
         player.rectmove(x, y)
@@ -292,13 +386,27 @@ def main():
         all_sprites.update()
         pygame.display.flip()
         count += 1
-        if count > 2:
+        frames_count += 1
+        enemy_count += 1
+        if frames_count > 10:
+            frames_count = 0
+        if enemy_count > 5:
+            enemy_count = 0
+        if count > 15:
             count = 0
-        if load_level('map.txt')[y][x] == '.':
+        if map_point[y][x] == '.':
             maplist[y][x].kill()
-            # pointcount += 1
-            # print(x, y)
-        # print(pointcount)
+            count_point += 1
+            map_point[y][x] = ' '
+        if count_point == final_points:
+            if level_id < 1:
+                level_id += 1
+                screen.fill((0, 0, 0))
+                return next_level()
+            else:
+                return final_window()
+        if game_over:
+            return game_over_window()
 
 
 if __name__ == '__main__':
