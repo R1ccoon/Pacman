@@ -1,8 +1,10 @@
 import pygame
 import os
 import sys
+import time
 import random
 
+"""Константы"""
 level_id = 0
 frames_count = 0
 black = (0, 0, 0)
@@ -29,8 +31,15 @@ background = background.convert()
 n = []
 maplist = []
 mapfile = ['map.txt', 'map1.txt']
+GRAVITY = 1
+sdvig = 400
+
 
 def load_image(name, colorkey=None):
+    """
+    Функция для загрузки спрайтов
+    """
+
     fullname = os.path.join('data', name)
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
@@ -48,6 +57,8 @@ def load_image(name, colorkey=None):
 
 
 def terminate():
+    """Закрывает программу когда это нужно"""
+
     pygame.quit()
     sys.exit()
 
@@ -56,11 +67,20 @@ tile_width = tile_height = 30
 
 
 def final_window():
+    """
+    Открывает финальное окно с результатами в случае победы игрока
+    """
+
+    f = open("data/Points.txt", 'r')
+    s = f.readline()
     screen.fill((0, 0, 0))
-    intro_text = "You WIN!!!!"
-    font = pygame.font.Font(None, 80)
+    intro_text = f"You WIN!!!! " \
+                 f"вы набрали {s} очков"
+    fon = pygame.transform.scale(load_image('start.jpg'), (width, height))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
     text_coord = 50
-    string_rendered = font.render(intro_text, 1, pygame.Color('white'))
+    string_rendered = font.render(intro_text, True, pygame.Color('white'))
     intro_rect = string_rendered.get_rect()
     # text_coord += 40
     intro_rect.top = text_coord
@@ -79,15 +99,20 @@ def final_window():
 
 
 def game_over_window():
+    """
+    Открывает экран проигрыша в случае проигрыша игрока
+    """
+
     screen.fill((0, 0, 0))
     intro_text = "GAME OVER"
-    font = pygame.font.Font(None, 80)
+    font = pygame.font.Font('data/arial.ttf', 80)
     text_coord = 50
-    string_rendered = font.render(intro_text, 1, pygame.Color('white'))
+    string_rendered = font.render(intro_text, True, pygame.Color('white'))
     intro_rect = string_rendered.get_rect()
     # text_coord += 40
     intro_rect.top = text_coord
-    intro_rect.x = 180
+    intro_rect.x = 100
+    intro_rect.y = 100
     # text_coord += intro_rect.height
     screen.blit(string_rendered, intro_rect)
     while True:
@@ -96,25 +121,36 @@ def game_over_window():
                 terminate()
             elif event.type == pygame.KEYDOWN or \
                     event.type == pygame.MOUSEBUTTONDOWN:
-                return main()  # начинаем игру
+                terminate()  # начинаем игру
         pygame.display.flip()
         clock.tick(fps)
 
 
 def start_screen():
+    """
+    Функция запускает начальный экран и остлеживает
+    нажатия пользователя для дальнейшего запуска игры
+    """
+
     intro_text = "PACMAN"
+    osn_text: str = "Нажмите любую кнопку"
     fon = pygame.transform.scale(load_image('start.jpg'), (width, height))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 80)
+    fontmini = pygame.font.Font(None, 50)
     text_coord = 50
-    string_rendered = font.render(intro_text, 1, pygame.Color('white'))
+    string_rendered = font.render(intro_text, True, pygame.Color('white'))
+    string_rendered1 = fontmini.render(osn_text, True, pygame.Color('white'))
     intro_rect = string_rendered.get_rect()
+    osn_text = string_rendered1.get_rect()
     # text_coord += 40
     intro_rect.top = text_coord
     intro_rect.x = 180
+    osn_text.x = 100
+    osn_text.y = 200
     # text_coord += intro_rect.height
     screen.blit(string_rendered, intro_rect)
-
+    screen.blit(string_rendered1, osn_text)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -127,6 +163,10 @@ def start_screen():
 
 
 def load_level(filename):
+    """
+    Функция считывание карты из txt файла
+    """
+
     filename = "data/" + filename
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
@@ -140,7 +180,11 @@ def load_level(filename):
 
 
 class Tile(pygame.sprite.Sprite):
+    """Класс Стены"""
+
     def __init__(self, tile_type, pos_x, pos_y):
+        """инициализация класса"""
+
         super().__init__(tiles_group, all_sprites)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
@@ -148,7 +192,11 @@ class Tile(pygame.sprite.Sprite):
 
 
 class Point(pygame.sprite.Sprite):
+    """Класс Поинтов"""
+
     def __init__(self, tile_type, pos_x, pos_y):
+        """инициализация класса"""
+
         super().__init__(point_group, all_sprites)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
@@ -156,6 +204,11 @@ class Point(pygame.sprite.Sprite):
 
 
 def generate_level(level):
+    """
+    Функция генерирует уровень по
+    txt файлу и создает объекты карты
+    """
+
     new_player, new_enemy, x, y = None, None, None, None
     for y in range(len(level)):
         n = []
@@ -191,7 +244,12 @@ def generate_level(level):
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
+    """Класс игрока"""
+
     def __init__(self, sheet, columns, rows, x, y):
+
+        """инициализация класса"""
+
         super().__init__(all_sprites)
         self.sheet = sheet
         self.columns = columns
@@ -203,6 +261,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.posy = y
         self.image = self.frames[self.cur_frame]
         self.rect = self.rect.move(tile_width * self.posx, tile_height * self.posy)
+        self.direction = 2
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
@@ -214,7 +273,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
     def update(self):
         if frames_count == 10:
             self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-            self.image = self.frames[self.cur_frame]
+            self.image = pygame.transform.rotate(self.frames[self.cur_frame], self.direction * 90)
 
     def coordreturn(self):
         return self.posx, self.posy
@@ -228,6 +287,9 @@ class AnimatedSprite(pygame.sprite.Sprite):
 
 class AnimatedEnemy(pygame.sprite.Sprite):
     def __init__(self, sheet, columns, rows, x, y):
+
+        """инициализация класса"""
+
         super().__init__(all_sprites)
         self.sheet = sheet
         self.columns = columns
@@ -242,6 +304,9 @@ class AnimatedEnemy(pygame.sprite.Sprite):
         self.rect = self.rect.move(tile_width * self.pos_x, tile_height * self.pos_y)
 
     def cut_sheet(self, sheet, columns, rows):
+
+        """функция создания фреймов"""
+
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
         for j in range(rows):
             for i in range(columns):
@@ -249,14 +314,23 @@ class AnimatedEnemy(pygame.sprite.Sprite):
                 self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
 
     def update(self):
+
+        """функция анимирует спрайт (обновляет его)"""
+
         if frames_count == 10:
             self.cur_frame = (self.cur_frame + 1) % len(self.frames)
             self.image = self.frames[self.cur_frame]
 
     def coordreturn(self):
+
+        """Возвращение координат противника"""
+
         return self.pos_x, self.pos_y
 
     def rectmove(self, x, y):
+
+        """Функция передвигает противника на нужные координаты"""
+
         self.cut_sheet(self.sheet, self.columns, self.rows)
         self.pos_x = x
         self.pos_y = y
@@ -265,10 +339,24 @@ class AnimatedEnemy(pygame.sprite.Sprite):
 
 
 def enemies_brain(x_1, y_1, xplayer, yplayer):
+    """
+    В данной функции описан невероятный
+    современный исскуственный интеллект,
+    аналогов которому в данный момент нету во всем мире
+    (данный ИИ очень быстро обучается из - за чего может моментально реагировать на действия игрока)
+    """
+
     if x_1 == xplayer and y_1 == yplayer:
+        collide((x_1 * 30, y_1 * 30))
         global game_over
         game_over = True
     while True:
+
+        """
+        Сам исскусвенный интеллект
+        P.S. никому не демонстрировать личная разработка
+        """
+
         direction = random.randint(1, 4)
         if direction == 1 and \
                 (load_level(mapfile[level_id])[y_1][x_1 + 1] == '.'
@@ -276,6 +364,7 @@ def enemies_brain(x_1, y_1, xplayer, yplayer):
                  or load_level(mapfile[level_id])[y_1][x_1 + 1] == '#'):
             x_1 += 1
             return x_1, y_1
+
         if direction == 2 and \
                 (load_level(mapfile[level_id])[y_1][x_1 - 1] == '.'
                  or load_level(mapfile[level_id])[y_1][x_1 - 1] == '@'
@@ -296,7 +385,24 @@ def enemies_brain(x_1, y_1, xplayer, yplayer):
             return x_1, y_1
 
 
+font_name = pygame.font.match_font('arial')
+WHITE = (255, 255, 255)
+
+
+def draw_text(surf, text, size, x, y):
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, WHITE)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(text_surface, text_rect)
+
+
 def next_level():
+    """
+    Функция удаляет все спрайты и очищает карту,
+    что позволяет либо перезапустить уровень либо запустить следующий
+    """
+
     global n
     global all_sprites
     global tiles_group
@@ -328,7 +434,53 @@ tile_images = {
 game_over = False
 
 
+class Particle(pygame.sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = [load_image("star.png")]
+    for scale in (5, 10, 20):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_sprites)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость — это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+
+        # гравитация будет одинаковой (значение константы)
+        self.gravity = GRAVITY
+
+    def update(self):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect((0, 0, 600, 330)):
+            self.kill()
+
+
+def collide(position):
+    # количество создаваемых частиц
+    particle_count = 5
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers))
+
+
 def main():
+    """
+    Данная функция является основной в программе,
+    запускает игру так обозначает основные переменные
+    для подсчета различных данных непосредственно в самой игре
+    """
+
     global game_over
     global frames_count
     global level_id
@@ -337,7 +489,7 @@ def main():
     x, y = player.coordreturn()
     x_1, y_1 = enemy.coordreturn()
     count = 0
-    move = 1
+    move = 5
     map_point = []
     count_point = 0
     final_points = 0
@@ -361,25 +513,34 @@ def main():
                     move = 3
                 if event.key == pygame.K_DOWN:
                     move = 4
-        if (load_level(mapfile[level_id])[y][x - 1] == '.' or load_level(mapfile[level_id])[y][x - 1] == '@'
+        if (load_level(mapfile[level_id])[y][x - 1] == '.'
+            or load_level(mapfile[level_id])[y][x - 1] == '@'
             or load_level(mapfile[level_id])[y][x - 1] == '#') \
                 and move == 1 and count == 15:
             x -= 1
-        if (load_level(mapfile[level_id])[y][x + 1] == '.' or load_level(mapfile[level_id])[y][x + 1] == '@'
+            player.direction = 2
+        if (load_level(mapfile[level_id])[y][x + 1] == '.'
+            or load_level(mapfile[level_id])[y][x + 1] == '@'
             or load_level(mapfile[level_id])[y][x + 1] == '#') \
                 and move == 2 and count == 15:
             x += 1
-        if (load_level(mapfile[level_id])[y - 1][x] == '.' or load_level(mapfile[level_id])[y - 1][x] == '@'
+            player.direction = 0
+        if (load_level(mapfile[level_id])[y - 1][x] == '.'
+            or load_level(mapfile[level_id])[y - 1][x] == '@'
             or load_level(mapfile[level_id])[y - 1][x] == '#') \
                 and move == 3 and count == 15:
             y -= 1
-        if (load_level(mapfile[level_id])[y + 1][x] == '.' or load_level(mapfile[level_id])[y + 1][x] == '@'
+            player.direction = 1
+        if (load_level(mapfile[level_id])[y + 1][x] == '.'
+            or load_level(mapfile[level_id])[y + 1][x] == '@'
             or load_level(mapfile[level_id])[y + 1][x] == '#') \
                 and move == 4 and count == 15:
             y += 1
+            player.direction = 3
         if enemy_count == 5:
             x_1, y_1 = enemies_brain(x_1, y_1, x, y)
         all_sprites.draw(screen)
+        draw_text(screen, 'Счет:' + str(count_point), 18, 50, 20)
         enemy.rectmove(x_1, y_1)
         player.rectmove(x, y)
         clock.tick(fps)
@@ -399,6 +560,14 @@ def main():
             count_point += 1
             map_point[y][x] = ' '
         if count_point == final_points:
+            f = open('data/Points.txt', 'w+')
+            try:
+                s = int(f.readline())
+            except BaseException:
+                s = 0
+            s += count_point
+            f.write(str(s))
+            f.close()
             if level_id < 1:
                 level_id += 1
                 screen.fill((0, 0, 0))
@@ -406,7 +575,17 @@ def main():
             else:
                 return final_window()
         if game_over:
+            break
+    k = 0
+    while True:
+        collide((x * 30, y * 30))
+        k += 1
+        clock.tick(fps)
+        if k > 10:
             return game_over_window()
+        all_sprites.update()
+        all_sprites.draw(screen)
+        pygame.display.flip()
 
 
 if __name__ == '__main__':
