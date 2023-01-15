@@ -2,7 +2,7 @@ import pygame
 import os
 import sys
 import random
-
+import math
 
 """Константы"""
 level_id = 0
@@ -340,6 +340,9 @@ class AnimatedEnemy(pygame.sprite.Sprite):
         # while True:
 
 
+pred_direct = 'x - 1'
+
+
 def enemies_brain(x_1, y_1, xplayer, yplayer):
     """
     В данной функции описан невероятный
@@ -348,43 +351,62 @@ def enemies_brain(x_1, y_1, xplayer, yplayer):
     (данный ИИ очень быстро обучается из - за чего может моментально реагировать на действия игрока)
     """
 
+    global pred_direct
+
     if x_1 == xplayer and y_1 == yplayer:
         collide((x_1 * 30, y_1 * 30))
         global game_over
         game_over = True
-    while True:
+        return x_1, y_1
+    m = ['x_1 + 1', 'x_1 - 1', 'y_1 + 1', 'y_1 - 1']
+    anti_direct = ''
+    if pred_direct[4] == '+':
+        anti_direct = pred_direct[:4] + '-' + pred_direct[5:]
+    if pred_direct[4] == '-':
+        anti_direct = pred_direct[:4] + '+' + pred_direct[5:]
 
-        """
-        Сам исскусвенный интеллект
-        P.S. никому не демонстрировать личная разработка
-        """
+    mb_direct = []
+    """
+    Сам исскусвенный интеллект
+    P.S. никому не демонстрировать личная разработка
+    """
+    for i in m:
+        if i[0] == 'x':
+            if (load_level(mapfile[level_id])[y_1][eval(i)] == '.'
+                    or load_level(mapfile[level_id])[y_1][eval(i)] == '@'
+                    or load_level(mapfile[level_id])[y_1][eval(i)] == '#')\
+                    and i != anti_direct:
+                mb_direct.append(i)
+        if i[0] == 'y':
+            if (load_level(mapfile[level_id])[eval(i)][x_1] == '.'
+                    or load_level(mapfile[level_id])[eval(i)][x_1] == '@'
+                    or load_level(mapfile[level_id])[eval(i)][x_1] == '#')\
+                    and i != anti_direct:
+                mb_direct.append(i)
+    k1 = 0
+    k2 = 0
+    gpm = 10 ** 10
+    directi = ''
+    for i in range(len(mb_direct)):
+        if mb_direct[i][0] == 'x':
+            k1 = abs(xplayer - (eval(mb_direct[i])))
+            k2 = abs(yplayer - y_1)
+        if mb_direct[i][0] == 'y':
+            k1 = abs(xplayer - x_1)
+            k2 = abs(yplayer - eval(mb_direct[i]))
+        gp = k1 ** 2 + k2 ** 2
+        if gp < gpm:
+            directi = mb_direct[i]
+            gpm = gp
+        if gp == gpm:
+            pass
 
-        direction = random.randint(1, 4)
-        if direction == 1 and \
-                (load_level(mapfile[level_id])[y_1][x_1 + 1] == '.'
-                 or load_level(mapfile[level_id])[y_1][x_1 + 1] == '@'
-                 or load_level(mapfile[level_id])[y_1][x_1 + 1] == '#'):
-            x_1 += 1
-            return x_1, y_1
+    pred_direct = directi
+    if directi[0] == 'x':
+        return eval(directi), y_1
+    else:
+        return x_1, eval(directi)
 
-        if direction == 2 and \
-                (load_level(mapfile[level_id])[y_1][x_1 - 1] == '.'
-                 or load_level(mapfile[level_id])[y_1][x_1 - 1] == '@'
-                 or load_level(mapfile[level_id])[y_1][x_1 - 1] == '#'):
-            x_1 -= 1
-            return x_1, y_1
-        if direction == 3 and \
-                (load_level(mapfile[level_id])[y_1 + 1][x_1] == '.'
-                 or load_level(mapfile[level_id])[y_1 + 1][x_1] == '@'
-                 or load_level(mapfile[level_id])[y_1 + 1][x_1] == '#'):
-            y_1 += 1
-            return x_1, y_1
-        if direction == 4 and \
-                (load_level(mapfile[level_id])[y_1 - 1][x_1] == '.'
-                 or load_level(mapfile[level_id])[y_1 - 1][x_1] == '@'
-                 or load_level(mapfile[level_id])[y_1 - 1][x_1] == '#'):
-            y_1 -= 1
-            return x_1, y_1
 
 
 font_name = pygame.font.match_font('arial')
@@ -540,7 +562,7 @@ def main():
                 and move == 4 and count == 15:
             y += 1
             player.direction = 3
-        if enemy_count == 5:
+        if enemy_count == 20:
             x_1, y_1 = enemies_brain(x_1, y_1, x, y)
         all_sprites.draw(screen)
         draw_text(screen, 'Счет:' + str(count_point), 38, 50 + sdvigx, sdvigy - 40)
@@ -554,7 +576,7 @@ def main():
         enemy_count += 1
         if frames_count > 10:
             frames_count = 0
-        if enemy_count > 5:
+        if enemy_count > 20:
             enemy_count = 0
         if count > 15:
             count = 0
