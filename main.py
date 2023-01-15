@@ -1,8 +1,8 @@
 import pygame
 import os
 import sys
-import time
 import random
+
 
 """Константы"""
 level_id = 0
@@ -15,7 +15,7 @@ red = (255, 0, 0)
 purple = (255, 0, 255)
 yellow = (255, 255, 0)
 pygame.init()
-size = width, height = 600, 330
+size = width, height = 1920, 1080
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 point_group = pygame.sprite.Group()
@@ -32,7 +32,8 @@ n = []
 maplist = []
 mapfile = ['map.txt', 'map1.txt']
 GRAVITY = 1
-sdvig = 400
+sdvigy = 400
+sdvigx = 640
 
 
 def load_image(name, colorkey=None):
@@ -84,7 +85,7 @@ def final_window():
     intro_rect = string_rendered.get_rect()
     # text_coord += 40
     intro_rect.top = text_coord
-    intro_rect.x = 180
+    intro_rect.x = 180 + sdvigx
     # text_coord += intro_rect.height
     screen.blit(string_rendered, intro_rect)
     while True:
@@ -111,8 +112,8 @@ def game_over_window():
     intro_rect = string_rendered.get_rect()
     # text_coord += 40
     intro_rect.top = text_coord
-    intro_rect.x = 100
-    intro_rect.y = 100
+    intro_rect.x = 100 + sdvigx
+    intro_rect.y = 100 + sdvigy
     # text_coord += intro_rect.height
     screen.blit(string_rendered, intro_rect)
     while True:
@@ -145,9 +146,10 @@ def start_screen():
     osn_text = string_rendered1.get_rect()
     # text_coord += 40
     intro_rect.top = text_coord
-    intro_rect.x = 180
-    osn_text.x = 100
-    osn_text.y = 200
+    intro_rect.x = 180 + sdvigx
+    intro_rect.y = 300
+    osn_text.x = 100 + sdvigx
+    osn_text.y = 200 + sdvigy + 100
     # text_coord += intro_rect.height
     screen.blit(string_rendered, intro_rect)
     screen.blit(string_rendered1, osn_text)
@@ -188,7 +190,7 @@ class Tile(pygame.sprite.Sprite):
         super().__init__(tiles_group, all_sprites)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
+            tile_width * pos_x + sdvigx, tile_height * pos_y + sdvigy)
 
 
 class Point(pygame.sprite.Sprite):
@@ -200,7 +202,7 @@ class Point(pygame.sprite.Sprite):
         super().__init__(point_group, all_sprites)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
+            tile_width * pos_x + sdvigx, tile_height * pos_y + sdvigy)
 
 
 def generate_level(level):
@@ -260,7 +262,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.posx = x
         self.posy = y
         self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(tile_width * self.posx, tile_height * self.posy)
+        self.rect = self.rect.move(tile_width * self.posx + sdvigx, tile_height * self.posy + sdvigy)
         self.direction = 2
 
     def cut_sheet(self, sheet, columns, rows):
@@ -282,7 +284,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.cut_sheet(self.sheet, self.columns, self.rows)
         self.posx = x
         self.posy = y
-        self.rect = self.rect.move(tile_width * self.posx, tile_height * self.posy)
+        self.rect = self.rect.move(tile_width * self.posx + sdvigx, tile_height * self.posy + sdvigy)
 
 
 class AnimatedEnemy(pygame.sprite.Sprite):
@@ -301,7 +303,7 @@ class AnimatedEnemy(pygame.sprite.Sprite):
         self.pos_x = x
         self.pos_y = y
         self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(tile_width * self.pos_x, tile_height * self.pos_y)
+        self.rect = self.rect.move(tile_width * self.pos_x + sdvigx, tile_height * self.pos_y + sdvigy)
 
     def cut_sheet(self, sheet, columns, rows):
 
@@ -334,7 +336,7 @@ class AnimatedEnemy(pygame.sprite.Sprite):
         self.cut_sheet(self.sheet, self.columns, self.rows)
         self.pos_x = x
         self.pos_y = y
-        self.rect = self.rect.move(tile_width * self.pos_x, tile_height * self.pos_y)
+        self.rect = self.rect.move(tile_width * self.pos_x + sdvigx, tile_height * self.pos_y + sdvigy)
         # while True:
 
 
@@ -461,7 +463,7 @@ class Particle(pygame.sprite.Sprite):
         self.rect.x += self.velocity[0]
         self.rect.y += self.velocity[1]
         # убиваем, если частица ушла за экран
-        if not self.rect.colliderect((0, 0, 600, 330)):
+        if not self.rect.colliderect((200, 200, 1920, 1080)):
             self.kill()
 
 
@@ -498,6 +500,7 @@ def main():
         n = list(i)
         final_points += i.count('.')
         map_point.append(n)
+
     while True:
         screen.fill((0, 0, 0))
         background.fill(black)
@@ -540,7 +543,7 @@ def main():
         if enemy_count == 5:
             x_1, y_1 = enemies_brain(x_1, y_1, x, y)
         all_sprites.draw(screen)
-        draw_text(screen, 'Счет:' + str(count_point), 18, 50, 20)
+        draw_text(screen, 'Счет:' + str(count_point), 38, 50 + sdvigx, sdvigy - 40)
         enemy.rectmove(x_1, y_1)
         player.rectmove(x, y)
         clock.tick(fps)
@@ -578,7 +581,7 @@ def main():
             break
     k = 0
     while True:
-        collide((x * 30, y * 30))
+        collide((x * 30 + sdvigx, y * 30 + sdvigy))
         k += 1
         clock.tick(fps)
         if k > 10:
